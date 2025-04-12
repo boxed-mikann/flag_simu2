@@ -1,0 +1,44 @@
+# Compiled source files
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Packages
+*.jar
+*.war
+*.ear
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE specific files
+.idea/
+.vscode/
+*.iml
+
+# Dependency directories
+node_modules/
+vendor/
+
+# Build directories
+dist/
+build/
+out/
+
+# Temporary files
+*.tmp
+*.swp
+*.bak
+*.old
+
+# Git specific files
+*.orig
+*.rej
