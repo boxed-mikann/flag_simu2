@@ -33,8 +33,8 @@ function App() {
     for (let row = 0; row < formation.rows; row++) {
       for (let col = 0; col < formation.columns; col++) {
         const xOffset = (col - (formation.columns - 1) / 2) * formation.spacing;
-        const yOffset = (row - (formation.rows - 1) / 2) * formation.spacing;
-        
+        const zOffset = (row - (formation.rows - 1) / 2) * formation.spacing;
+
         flags.push(
           <FlagSimulation
             key={`flag-${row}-${col}`}
@@ -42,8 +42,8 @@ function App() {
             size={flagSize}
             position={{
               x: flagPosition.x + xOffset,
-              y: flagPosition.y + yOffset,
-              z: flagPosition.z
+              y: flagPosition.y,
+              z: flagPosition.z + zOffset
             }}
             windForce={windForce}
             poleRotation={poleRotation} // 追加：回転角度の渡し
