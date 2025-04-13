@@ -11,6 +11,7 @@ function App() {
   const [flagPosition, setFlagPosition] = useState({ x: 0, y: 0, z: 0 });
   const [windForce, setWindForce] = useState(1);
   const [formation, setFormation] = useState({ rows: 1, columns: 1, spacing: 1 });
+  const [poleRotation, setPoleRotation] = useState(0); // 追加：旗竿の回転角度
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,6 +46,7 @@ function App() {
               z: flagPosition.z
             }}
             windForce={windForce}
+            poleRotation={poleRotation} // 追加：回転角度の渡し
           />
         );
       }
@@ -82,6 +84,8 @@ function App() {
             setWindForce={setWindForce}
             formation={formation}
             setFormation={setFormation}
+            poleRotation={poleRotation} // 追加：回転角度の渡し
+            setPoleRotation={setPoleRotation} // 追加：回転角度の設定関数
           />
         </div>
 

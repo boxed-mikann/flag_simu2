@@ -14,6 +14,7 @@ interface FlagSimulationProps {
     z: number;
   };
   windForce: number;
+  poleRotation: number; // 追加：旗竿の回転角度
 }
 
 class ClothSimulation {
@@ -32,17 +33,19 @@ class ClothSimulation {
   private poleRadius: number;
   private polePosition: THREE.Vector3;
   private selfCollisionRadius: number;
+  private poleRotation: number;
 
   constructor(width: number, height: number, segments: { x: number; y: number }) {
     this.w = width;
     this.h = height;
     this.segments = segments;
-    this.mass = 0.05;        // 質量を軽くする
-    this.damping = 0.04;     // 減衰を小さくする
-    this.gravity = 9.8;      // 重力を弱める
-    this.poleRadius = 0.02;  // 旗竿の半径
-    this.polePosition = new THREE.Vector3(-width / 2, 0, 0);  // 旗竿の位置
-    this.selfCollisionRadius = width / segments.x * 0.4;  // 自己衝突の判定半径
+    this.mass = 0.05;        // 質量は軽いまま
+    this.damping = 0.03;     // 減衰を若干増加
+    this.gravity = 5.0;      // 重力は現状維持
+    this.poleRadius = 0.02;
+    this.polePosition = new THREE.Vector3(-width / 2, 0, 0);
+    this.selfCollisionRadius = width / segments.x * 0.4;
+    this.poleRotation = 0;
 
     this.particles = [];
     this.originalPositions = [];
@@ -73,7 +76,7 @@ class ClothSimulation {
     // 構造的な接続の作成
     const getIndex = (x: number, y: number) => y * (this.segments.x + 1) + x;
 
-    // 水平方向の接続
+    // 水平方向の接続（剛性を上げる）
     for (let y = 0; y <= this.segments.y; y++) {
       for (let x = 0; x < this.segments.x; x++) {
         const p1 = getIndex(x, y);
@@ -83,7 +86,7 @@ class ClothSimulation {
       }
     }
 
-    // 垂直方向の接続
+    // 垂直方向の接続（剛性を上げる）
     for (let x = 0; x <= this.segments.x; x++) {
       for (let y = 0; y < this.segments.y; y++) {
         const p1 = getIndex(x, y);
@@ -93,17 +96,17 @@ class ClothSimulation {
       }
     }
 
-    // 対角線の接続（剛性を下げる）
+    // 対角線の接続（わずかに緩める程度に）
     for (let y = 0; y < this.segments.y; y++) {
       for (let x = 0; x < this.segments.x; x++) {
         const p1 = getIndex(x, y);
         const p2 = getIndex(x + 1, y + 1);
-        const distance = this.particles[p1].distanceTo(this.particles[p2]) * 1.1; // 斜めの制約を少し緩める
+        const distance = this.particles[p1].distanceTo(this.particles[p2]) * 1.05; // 5%だけ緩める
         this.constraints.push({ p1, p2, distance });
 
         const p3 = getIndex(x + 1, y);
         const p4 = getIndex(x, y + 1);
-        const distance2 = this.particles[p3].distanceTo(this.particles[p4]) * 1.1;
+        const distance2 = this.particles[p3].distanceTo(this.particles[p4]) * 1.05;
         this.constraints.push({ p1: p3, p2: p4, distance: distance2 });
       }
     }
@@ -208,6 +211,14 @@ class ClothSimulation {
     });
   }
 
+  setPoleRotation(angle: number) {
+    this.poleRotation = (angle * Math.PI) / 180; // 度からラジアンに変換
+    // 旗竿の新しい位置を計算
+    const rotatedX = -this.w / 2 * Math.cos(this.poleRotation);
+    const rotatedZ = this.w / 2 * Math.sin(this.poleRotation);
+    this.polePosition.set(rotatedX, 0, rotatedZ);
+  }
+
   update(windForce: number, deltaTime: number) {
     // 力のリセット
     this.forces.forEach(force => force.set(0, 0, 0));
@@ -215,31 +226,30 @@ class ClothSimulation {
     // 重力と風の力を適用
     const time = Date.now() * 0.001;
     for (let i = 0; i < this.particles.length; i++) {
-      // 左端は固定
-      if (i % (this.segments.x + 1) === 0) continue;
+      // 左端は固定（回転に合わせて位置を調整）
+      if (i % (this.segments.x + 1) === 0) {
+        const y = this.particles[i].y;
+        this.particles[i].x = this.polePosition.x;
+        this.particles[i].y = y;
+        this.particles[i].z = this.polePosition.z;
+        continue;
+      }
 
       const force = this.forces[i];
       
       // 重力
       force.y -= this.gravity * this.mass;
-      // 風力の計算 - ランダムな強度と方向を持つ風を実装
-      const baseWindForce = windForce * 5; // 風力の基本強度を増加
+
+      // 風力の計算 - 回転に合わせて風向きを調整
+      const baseWindForce = windForce * 8;
       const xPos = (i % (this.segments.x + 1)) / this.segments.x;
-
-      // ランダムな風の強度と方向
-      const randomDirectionX = Math.sin(time * 2 + xPos * Math.PI * 2) * 0.5 + 0.5; // -0.5 ~ 0.5 の範囲で変化
-      const randomDirectionZ = Math.cos(time * 1.5 + xPos * Math.PI * 2) * 0.5 + 0.5; // -0.5 ~ 0.5 の範囲で変化
-      const randomStrength = Math.sin(time * 1.2 + xPos * Math.PI) * 0.3 + 0.7; // 0.4 ~ 1.0 の範囲で変化
-
-      // 風力をX軸とZ軸方向にランダム性を持たせて設定
-      const localWindForceX = baseWindForce * randomStrength * randomDirectionX;
-      const localWindForceZ = baseWindForce * randomStrength * randomDirectionZ;
-
-      force.add(new THREE.Vector3(
-        localWindForceX,
-        0, // 上下方向の風はなし
-        localWindForceZ
-      ));
+      
+      // 風の方向を旗竿の回転に合わせて調整
+      const windX = Math.cos(this.poleRotation) * baseWindForce * (0.7 + xPos * 0.3);
+      const windZ = Math.sin(this.poleRotation) * baseWindForce * (0.7 + xPos * 0.3);
+      const yWave = Math.sin(time * 1.5 + xPos * Math.PI * 2) * baseWindForce * 0.25;
+      
+      force.add(new THREE.Vector3(windX, yWave, windZ));
     }
 
     // バーレー積分による位置の更新
@@ -265,8 +275,8 @@ class ClothSimulation {
     // 制約解決の前に衝突判定を行う
     this.handleCollisions();
 
-    // 制約の解決（反復回数を減らしてより柔らかい動きに）
-    const iterations = 2;
+    // 制約の解決（反復回数を増やして形状をより正確に保持）
+    const iterations = 4; // 反復回数を4回に増やす
     for (let i = 0; i < iterations; i++) {
       this.constraints.forEach(({ p1, p2, distance }) => {
         const pos1 = this.particles[p1];
@@ -278,7 +288,7 @@ class ClothSimulation {
         if (currentDist === 0) return;
         
         const correctionFactor = (currentDist - distance) / currentDist;
-        const correction = diff.multiplyScalar(correctionFactor * 0.4); // 補正係数を小さくして柔らかく
+        const correction = diff.multiplyScalar(correctionFactor * 0.7); // 補正係数を0.6に増加
 
         if (p1 % (this.segments.x + 1) !== 0) {
           pos1.add(correction);
@@ -314,6 +324,7 @@ const FlagSimulation: React.FC<FlagSimulationProps> = ({
   size,
   position,
   windForce,
+  poleRotation,
 }) => {
   const flagRef = useRef<THREE.Mesh>(null);
   const poleRef = useRef<THREE.Mesh>(null);
@@ -338,6 +349,13 @@ const FlagSimulation: React.FC<FlagSimulationProps> = ({
     };
   }, [size]);
 
+  // 回転角度の更新
+  useEffect(() => {
+    if (simulationRef.current) {
+      simulationRef.current.setPoleRotation(poleRotation);
+    }
+  }, [poleRotation]);
+
   // アニメーションの更新
   useEffect(() => {
     if (!simulationRef.current) return;
@@ -360,14 +378,15 @@ const FlagSimulation: React.FC<FlagSimulationProps> = ({
         cancelAnimationFrame(frameId);
       }
     };
-  }, [windForce, size, position]); // 依存配列にsize, positionを追加
+  }, [windForce, size, position, poleRotation]);
 
   return (
     <group position={[position.x, position.y, position.z]}>
-      {/* 旗竿 */}
+      {/* 旗竿 - 回転を適用 */}
       <mesh 
         ref={poleRef} 
-        position={[-size.width / 2, 0, 0]}
+        position={[-size.width/2 * Math.cos(poleRotation * Math.PI/180), 0, size.width/2 * Math.sin(poleRotation * Math.PI/180)]}
+        rotation={[0, -poleRotation * Math.PI/180, 0]}
       >
         <cylinderGeometry args={[0.02, 0.02, size.height * 1.2, 16]} />
         <meshStandardMaterial color="#888888" metalness={0.8} roughness={0.3} />

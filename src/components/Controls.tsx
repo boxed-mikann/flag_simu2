@@ -26,6 +26,8 @@ interface ControlsProps {
   setWindForce: React.Dispatch<React.SetStateAction<number>>;
   formation: Formation;
   setFormation: React.Dispatch<React.SetStateAction<Formation>>;
+  poleRotation: number;
+  setPoleRotation: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const Controls: React.FC<ControlsProps> = ({
@@ -37,6 +39,8 @@ const Controls: React.FC<ControlsProps> = ({
   setWindForce,
   formation,
   setFormation,
+  poleRotation,
+  setPoleRotation,
 }) => {
   return (
     <div className="controls">
@@ -210,6 +214,23 @@ const Controls: React.FC<ControlsProps> = ({
             }
           />
           <div className="value-display">{formation.spacing.toFixed(1)}</div>
+        </div>
+      </div>
+
+      <div className="control-group">
+        <h3>旗竿の回転</h3>
+        <div className="slider-container">
+          <label htmlFor="poleRotation">回転角度:</label>
+          <input
+            type="range"
+            id="poleRotation"
+            min="-180"
+            max="180"
+            step="1"
+            value={poleRotation}
+            onChange={(e) => setPoleRotation(parseFloat(e.target.value))}
+          />
+          <div className="value-display">{poleRotation.toFixed(0)}°</div>
         </div>
       </div>
     </div>
