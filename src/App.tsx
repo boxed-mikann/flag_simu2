@@ -1,7 +1,6 @@
 import React, { useState, useRef, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
-import { Physics } from '@react-three/cannon';
 import FlagSimulation from './components/FlagSimulation';
 import Controls from './components/Controls';
 import './App.css';
@@ -92,27 +91,17 @@ function App() {
             shadows
           >
             <color attach="background" args={["#f0f0f0"]} />
-            <ambientLight intensity={0.5} />
+            <ambientLight intensity={0.8} />
             <directionalLight 
-              position={[10, 10, 10]} 
+              position={[5, 5, 5]} 
               intensity={1}
               castShadow
               shadow-mapSize={[2048, 2048]}
             />
-            <Physics
-              gravity={[0, -9.81, 0]}
-              iterations={20}
-              tolerance={0.0001}
-              defaultContactMaterial={{
-                friction: 0.5,
-                restitution: 0.1
-              }}
-            >
-              <Suspense fallback={null}>
-                {renderFlags()}
-              </Suspense>
-            </Physics>
-            <OrbitControls maxPolarAngle={Math.PI / 2} />
+            <Suspense fallback={null}>
+              {renderFlags()}
+            </Suspense>
+            <OrbitControls />
           </Canvas>
         </div>
       </div>
