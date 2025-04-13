@@ -11,6 +11,12 @@ interface Position {
   z: number;
 }
 
+interface Formation {
+  rows: number;
+  columns: number;
+  spacing: number;
+}
+
 interface ControlsProps {
   flagSize: Size;
   setFlagSize: React.Dispatch<React.SetStateAction<Size>>;
@@ -18,6 +24,8 @@ interface ControlsProps {
   setFlagPosition: React.Dispatch<React.SetStateAction<Position>>;
   windForce: number;
   setWindForce: React.Dispatch<React.SetStateAction<number>>;
+  formation: Formation;
+  setFormation: React.Dispatch<React.SetStateAction<Formation>>;
 }
 
 const Controls: React.FC<ControlsProps> = ({
@@ -27,6 +35,8 @@ const Controls: React.FC<ControlsProps> = ({
   setFlagPosition,
   windForce,
   setWindForce,
+  formation,
+  setFormation,
 }) => {
   return (
     <div className="controls">
@@ -142,6 +152,64 @@ const Controls: React.FC<ControlsProps> = ({
             onChange={(e) => setWindForce(parseFloat(e.target.value))}
           />
           <div className="value-display">{windForce.toFixed(1)}</div>
+        </div>
+      </div>
+
+      <div className="control-group">
+        <h3>隊列設定</h3>
+        <div className="slider-container">
+          <label htmlFor="rows">列数:</label>
+          <input
+            type="range"
+            id="rows"
+            min="1"
+            max="5"
+            step="1"
+            value={formation.rows}
+            onChange={(e) =>
+              setFormation({
+                ...formation,
+                rows: parseInt(e.target.value),
+              })
+            }
+          />
+          <div className="value-display">{formation.rows}</div>
+        </div>
+        <div className="slider-container">
+          <label htmlFor="columns">行数:</label>
+          <input
+            type="range"
+            id="columns"
+            min="1"
+            max="5"
+            step="1"
+            value={formation.columns}
+            onChange={(e) =>
+              setFormation({
+                ...formation,
+                columns: parseInt(e.target.value),
+              })
+            }
+          />
+          <div className="value-display">{formation.columns}</div>
+        </div>
+        <div className="slider-container">
+          <label htmlFor="spacing">間隔:</label>
+          <input
+            type="range"
+            id="spacing"
+            min="0.5"
+            max="2"
+            step="0.1"
+            value={formation.spacing}
+            onChange={(e) =>
+              setFormation({
+                ...formation,
+                spacing: parseFloat(e.target.value),
+              })
+            }
+          />
+          <div className="value-display">{formation.spacing.toFixed(1)}</div>
         </div>
       </div>
     </div>

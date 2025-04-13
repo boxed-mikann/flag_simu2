@@ -1,7 +1,7 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
+import { useCylinder, useBox, usePointToPointConstraint } from '@react-three/cannon';
 
 interface FlagSimulationProps {
   image: string;
@@ -23,70 +23,66 @@ const FlagSimulation: React.FC<FlagSimulationProps> = ({
   position,
   windForce,
 }) => {
-  const meshRef = useRef<THREE.Mesh>(null);
   const texture = useTexture(image);
-  
-  // 旗のメッシュを生成
-  useEffect(() => {
-    if (meshRef.current) {
-      const geometry = meshRef.current.geometry as THREE.PlaneGeometry;
-      const positions = geometry.attributes.position;
-      
-      // オリジナルの頂点位置を保存（アニメーション用）
-      const originalPositions = new Float32Array(positions.array);
-      (meshRef.current as any).userData.originalPositions = originalPositions;
-    }
-  }, [size]);
 
-  // 風の効果によるアニメーション
-  useFrame(({ clock }) => {
-    if (meshRef.current) {
-      const geometry = meshRef.current.geometry as THREE.PlaneGeometry;
-      const positions = geometry.attributes.position;
-      const originalPositions = (meshRef.current as any).userData.originalPositions;
-      
-      if (originalPositions) {
-        const time = clock.getElapsedTime();
-        
-        for (let i = 0; i < positions.count; i++) {
-          // X座標のインデックス（i * 3）
-          const x = i % (geometry.parameters.widthSegments + 1);
-          
-          // X座標が大きいほど（右に行くほど）風の影響を強く受ける
-          const windEffect = (x / geometry.parameters.widthSegments) * windForce;
-          
-          // Y座標のアニメーション：sin波で上下の揺れを表現
-          const xOffset = originalPositions[i * 3];
-          positions.array[i * 3 + 1] = 
-            originalPositions[i * 3 + 1] + 
-            Math.sin(time * 2 + xOffset * 10) * 0.02 * windEffect;
-          
-          // Z座標のアニメーション：cos波で前後の揺れを表現
-          positions.array[i * 3 + 2] = 
-            originalPositions[i * 3 + 2] + 
-            Math.cos(time * 2 + xOffset * 10) * 0.01 * windEffect;
-        }
-        
-        positions.needsUpdate = true;
-      }
+  // 旗竿の作成（円柱）- Static（固定）オブジェクト
+  const [poleRef] = useCylinder(() => ({
+    args: [0.02, 0.02, size.height * 1.2, 16],
+    position: [position.x - size.width / 2, position.y, position.z],
+    rotation: [0, 0, 0],
+    type: "Static",
+  }));
+
+  // 旗の物理シミュレーション用のボックスを作成 - Dynamic（動的）オブジェクト
+  const [flagRef] = useBox(() => ({
+    args: [size.width, size.height, 0.01],
+    position: [position.x, position.y, position.z],
+    rotation: [0, 0, 0],
+    mass: 0.1,
+    type: "Dynamic",
+    material: {
+      friction: 0.2,
+      restitution: 0.2,
+    },
+    // 空気抵抗をシミュレート
+    linearDamping: 0.8,
+    angularDamping: 0.8,
+  }));
+
+  // 旗と旗竿を接続（左端を固定）
+  usePointToPointConstraint(
+    flagRef,
+    poleRef,
+    {
+      pivotA: [-size.width / 2, 0, 0], // 旗の左端
+      pivotB: [0, 0, 0], // 旗竿の中心
     }
-  });
+  );
+
+  // テクスチャの設定
+  const materialProps = {
+    map: texture,
+    side: THREE.DoubleSide,
+    transparent: true,
+    // クロス調の材質設定
+    roughness: 0.8,
+    metalness: 0.2,
+  };
 
   return (
-    <mesh
-      ref={meshRef}
-      position={[position.x, position.y, position.z]}
-      rotation={[0, 0, 0]}
-    >
-      <planeGeometry 
-        args={[size.width, size.height, 20, 20]} 
-      />
-      <meshStandardMaterial 
-        map={texture} 
-        side={THREE.DoubleSide}
-        transparent={true}
-      />
-    </mesh>
+    <>
+      {/* 旗竿 */}
+      <mesh ref={poleRef as any} castShadow>
+        <cylinderGeometry args={[0.02, 0.02, size.height * 1.2, 16]} />
+        <meshStandardMaterial color="#888888" metalness={0.8} roughness={0.3} />
+      </mesh>
+      
+      {/* 旗 */}
+      <mesh ref={flagRef as any} castShadow receiveShadow>
+        <boxGeometry args={[size.width, size.height, 0.01]} />
+        <meshStandardMaterial {...materialProps} />
+      </mesh>
+    </>
   );
 };
 
