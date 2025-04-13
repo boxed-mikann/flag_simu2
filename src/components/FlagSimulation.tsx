@@ -29,14 +29,20 @@ class ClothSimulation {
   private mass: number;
   private damping: number;
   private gravity: number;
+  private poleRadius: number;
+  private polePosition: THREE.Vector3;
+  private selfCollisionRadius: number;
 
   constructor(width: number, height: number, segments: { x: number; y: number }) {
     this.w = width;
     this.h = height;
     this.segments = segments;
-    this.mass = 0.1;
-    this.damping = 0.03;
-    this.gravity = 9.8;
+    this.mass = 0.05;        // 質量を軽くする
+    this.damping = 0.04;     // 減衰を小さくする
+    this.gravity = 9.8;      // 重力を弱める
+    this.poleRadius = 0.02;  // 旗竿の半径
+    this.polePosition = new THREE.Vector3(-width / 2, 0, 0);  // 旗竿の位置
+    this.selfCollisionRadius = width / segments.x * 0.4;  // 自己衝突の判定半径
 
     this.particles = [];
     this.originalPositions = [];
@@ -87,17 +93,17 @@ class ClothSimulation {
       }
     }
 
-    // 対角線の接続
+    // 対角線の接続（剛性を下げる）
     for (let y = 0; y < this.segments.y; y++) {
       for (let x = 0; x < this.segments.x; x++) {
         const p1 = getIndex(x, y);
         const p2 = getIndex(x + 1, y + 1);
-        const distance = this.particles[p1].distanceTo(this.particles[p2]);
+        const distance = this.particles[p1].distanceTo(this.particles[p2]) * 1.1; // 斜めの制約を少し緩める
         this.constraints.push({ p1, p2, distance });
 
         const p3 = getIndex(x + 1, y);
         const p4 = getIndex(x, y + 1);
-        const distance2 = this.particles[p3].distanceTo(this.particles[p4]);
+        const distance2 = this.particles[p3].distanceTo(this.particles[p4]) * 1.1;
         this.constraints.push({ p1: p3, p2: p4, distance: distance2 });
       }
     }
@@ -138,6 +144,70 @@ class ClothSimulation {
     this.geometry.setIndex(indices);
   }
 
+  private handleCollisions() {
+    // 旗竿との衝突判定
+    this.particles.forEach((particle, i) => {
+      if (i % (this.segments.x + 1) === 0) return; // 固定点はスキップ
+
+      // 旗竿との距離を計算
+      const dx = particle.x - this.polePosition.x;
+      const dz = particle.z - this.polePosition.z;
+      const distToPole = Math.sqrt(dx * dx + dz * dz);
+
+      // 旗竿との衝突解決
+      if (distToPole < this.poleRadius * 1.5) {
+        const angle = Math.atan2(dz, dx);
+        particle.x = this.polePosition.x + Math.cos(angle) * this.poleRadius * 1.5;
+        particle.z = this.polePosition.z + Math.sin(angle) * this.poleRadius * 1.5;
+      }
+    });
+
+    // 自己衝突の判定（簡易版）
+    const gridSize = 10;  // グリッドの分割数
+    const grid: number[][] = Array(gridSize).fill(0).map(() => []);
+    const cellSize = this.w / gridSize;
+
+    // パーティクルをグリッドに振り分け
+    this.particles.forEach((particle, i) => {
+      const x = Math.floor((particle.x + this.w / 2) / cellSize);
+      const gridX = Math.max(0, Math.min(gridSize - 1, x));
+      grid[gridX].push(i);
+    });
+
+    // 同じグリッド内のパーティクル同士で衝突判定
+    grid.forEach(cell => {
+      for (let i = 0; i < cell.length; i++) {
+        for (let j = i + 1; j < cell.length; j++) {
+          const p1 = this.particles[cell[i]];
+          const p2 = this.particles[cell[j]];
+          
+          // 近すぎるパーティクル同士を反発させる
+          const dx = p2.x - p1.x;
+          const dy = p2.y - p1.y;
+          const dz = p2.z - p1.z;
+          const distSquared = dx * dx + dy * dy + dz * dz;
+          
+          if (distSquared < this.selfCollisionRadius * this.selfCollisionRadius) {
+            const dist = Math.sqrt(distSquared);
+            const force = (this.selfCollisionRadius - dist) / dist * 0.5;
+            
+            // パーティクルを離す
+            if (cell[i] % (this.segments.x + 1) !== 0) {
+              p1.x -= dx * force;
+              p1.y -= dy * force;
+              p1.z -= dz * force;
+            }
+            if (cell[j] % (this.segments.x + 1) !== 0) {
+              p2.x += dx * force;
+              p2.y += dy * force;
+              p2.z += dz * force;
+            }
+          }
+        }
+      }
+    });
+  }
+
   update(windForce: number, deltaTime: number) {
     // 力のリセット
     this.forces.forEach(force => force.set(0, 0, 0));
@@ -152,39 +222,51 @@ class ClothSimulation {
       
       // 重力
       force.y -= this.gravity * this.mass;
+      // 風力の計算 - ランダムな強度と方向を持つ風を実装
+      const baseWindForce = windForce * 5; // 風力の基本強度を増加
+      const xPos = (i % (this.segments.x + 1)) / this.segments.x;
 
-      // 風力
-      const windX = Math.sin(time * 2) * windForce;
-      const windY = Math.cos(time * 1.5) * windForce * 0.1;
-      const windZ = Math.sin(time * 3) * windForce * 0.3;
-      force.add(new THREE.Vector3(windX, windY, windZ));
+      // ランダムな風の強度と方向
+      const randomDirectionX = Math.sin(time * 2 + xPos * Math.PI * 2) * 0.5 + 0.5; // -0.5 ~ 0.5 の範囲で変化
+      const randomDirectionZ = Math.cos(time * 1.5 + xPos * Math.PI * 2) * 0.5 + 0.5; // -0.5 ~ 0.5 の範囲で変化
+      const randomStrength = Math.sin(time * 1.2 + xPos * Math.PI) * 0.3 + 0.7; // 0.4 ~ 1.0 の範囲で変化
+
+      // 風力をX軸とZ軸方向にランダム性を持たせて設定
+      const localWindForceX = baseWindForce * randomStrength * randomDirectionX;
+      const localWindForceZ = baseWindForce * randomStrength * randomDirectionZ;
+
+      force.add(new THREE.Vector3(
+        localWindForceX,
+        0, // 上下方向の風はなし
+        localWindForceZ
+      ));
     }
 
     // バーレー積分による位置の更新
     for (let i = 0; i < this.particles.length; i++) {
-      if (i % (this.segments.x + 1) === 0) continue; // 左端は固定
+      if (i % (this.segments.x + 1) === 0) continue;
 
       const position = this.particles[i];
       const previous = this.previousPositions[i];
       const force = this.forces[i];
 
       const temp = position.clone();
-      
-      // 速度の計算（現在位置 - 前回位置）
       const velocity = position.clone().sub(previous);
       
-      // 減衰の適用
-      velocity.multiplyScalar(1 - this.damping);
+      // より大きな動きを可能にするため、減衰を位置に応じて調整
+      const xPos = (i % (this.segments.x + 1)) / this.segments.x;
+      const positionDamping = this.damping * (0.8 + xPos * 0.4);
       
-      // 新しい位置の計算
-      position.add(velocity).add(force.multiplyScalar(deltaTime * deltaTime));
-      
-      // 前回の位置を更新
+      velocity.multiplyScalar(1 - positionDamping);
+      position.add(velocity).add(force.multiplyScalar(deltaTime * deltaTime * 1.2));
       previous.copy(temp);
     }
 
-    // 制約の解決
-    const iterations = 3;
+    // 制約解決の前に衝突判定を行う
+    this.handleCollisions();
+
+    // 制約の解決（反復回数を減らしてより柔らかい動きに）
+    const iterations = 2;
     for (let i = 0; i < iterations; i++) {
       this.constraints.forEach(({ p1, p2, distance }) => {
         const pos1 = this.particles[p1];
@@ -196,9 +278,8 @@ class ClothSimulation {
         if (currentDist === 0) return;
         
         const correctionFactor = (currentDist - distance) / currentDist;
-        const correction = diff.multiplyScalar(correctionFactor * 0.5);
+        const correction = diff.multiplyScalar(correctionFactor * 0.4); // 補正係数を小さくして柔らかく
 
-        // 左端のパーティクルは動かさない
         if (p1 % (this.segments.x + 1) !== 0) {
           pos1.add(correction);
         }
@@ -207,6 +288,9 @@ class ClothSimulation {
         }
       });
     }
+
+    // さらに衝突判定を行う（制約解決後の位置修正）
+    this.handleCollisions();
 
     // ジオメトリの更新
     const positions = this.geometry.attributes.position.array as Float32Array;
@@ -259,6 +343,7 @@ const FlagSimulation: React.FC<FlagSimulationProps> = ({
     if (!simulationRef.current) return;
 
     let lastTime = Date.now();
+    let frameId: number;
 
     const animate = () => {
       const currentTime = Date.now();
@@ -266,12 +351,16 @@ const FlagSimulation: React.FC<FlagSimulationProps> = ({
       lastTime = currentTime;
 
       simulationRef.current?.update(windForce, deltaTime);
-      requestAnimationFrame(animate);
+      frameId = requestAnimationFrame(animate);
     };
 
-    const animationId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animationId);
-  }, [windForce]);
+    frameId = requestAnimationFrame(animate);
+    return () => {
+      if (frameId) {
+        cancelAnimationFrame(frameId);
+      }
+    };
+  }, [windForce, size, position]); // 依存配列にsize, positionを追加
 
   return (
     <group position={[position.x, position.y, position.z]}>
