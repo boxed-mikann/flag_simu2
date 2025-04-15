@@ -42,6 +42,11 @@ const Controls: React.FC<ControlsProps> = ({
   poleRotation,
   setPoleRotation,
 }) => {
+  // 角度ボタンのハンドラー関数
+  const handleRotationButtonClick = (angle: number) => {
+    setPoleRotation(angle);
+  };
+
   return (
     <div className="controls">
       <div className="control-group">
@@ -231,6 +236,40 @@ const Controls: React.FC<ControlsProps> = ({
             onChange={(e) => setPoleRotation(parseFloat(e.target.value))}
           />
           <div className="value-display">{poleRotation.toFixed(0)}°</div>
+        </div>
+        
+        {/* 角度ボタン */}
+        <div className="rotation-buttons">
+          <button 
+            className={poleRotation === -90 ? "active" : ""} 
+            onClick={() => handleRotationButtonClick(-90)}
+          >
+            -90°
+          </button>
+          <button 
+            className={poleRotation === -45 ? "active" : ""} 
+            onClick={() => handleRotationButtonClick(-45)}
+          >
+            -45°
+          </button>
+          <button 
+            className={poleRotation === 0 ? "active" : ""} 
+            onClick={() => handleRotationButtonClick(0)}
+          >
+            0°
+          </button>
+          <button 
+            className={poleRotation === 45 ? "active" : ""} 
+            onClick={() => handleRotationButtonClick(45)}
+          >
+            45°
+          </button>
+          <button 
+            className={poleRotation === 90 ? "active" : ""} 
+            onClick={() => handleRotationButtonClick(90)}
+          >
+            90°
+          </button>
         </div>
       </div>
     </div>
