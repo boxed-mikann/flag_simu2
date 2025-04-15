@@ -76,7 +76,7 @@ export class ClothSimulation {
     this.poleRotation = (angle * Math.PI) / 180;
     
     // 旗竿の下端を中心とした回転
-    const poleHeight = this.height * 1.2; // 旗竿の高さ
+    //const poleHeight = this.height * 1.2; // 旗竿の高さ
     const poleBottom = -this.height * 1.2; // 旗竿の下端位置
 
     // 固定点（左端）の位置を更新
