@@ -8,13 +8,11 @@ export class ParticleSystem {
   private width: number;
   private height: number;
   private segments: { x: number; y: number };
-  private mass: number;
 
   constructor(config: SimulationConfig) {
     this.width = config.width;
     this.height = config.height;
     this.segments = config.segments;
-    this.mass = config.mass || 0.05;
     
     this.particles = [];
     this.previousPositions = [];
