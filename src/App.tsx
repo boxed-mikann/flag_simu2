@@ -32,8 +32,8 @@ function App() {
     const flags = [];
     for (let row = 0; row < formation.rows; row++) {
       for (let col = 0; col < formation.columns; col++) {
-        const xOffset = (col - (formation.columns - 1) / 2) * formation.spacing;
-        const zOffset = (row - (formation.rows - 1) / 2) * formation.spacing;
+        const xOffset = (col - (formation.columns - 1) / 2) * formation.spacing*1.5;
+        const zOffset = (row - (formation.rows - 1) / 2) * formation.spacing*1.5;
 
         flags.push(
           <FlagSimulation
