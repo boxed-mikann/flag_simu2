@@ -40,6 +40,7 @@ const FlagSimulation: React.FC<FlagSimulationProps> = ({
   }, [size]);
 
   // 回転角度の更新
+  
   useEffect(() => {
     if (simulationRef.current) {
       simulationRef.current.setPoleRotation(poleRotation);
@@ -87,23 +88,21 @@ const FlagSimulation: React.FC<FlagSimulationProps> = ({
       {/* 旗と旗竿のグループ */}
       <group position={[position.x, position.y, position.z]}>
         {/* 下端を中心とした回転グループ */}
-        <group 
-          position={[0, -size.height * 0.6, 0]} // 回転の中心を下に移動
-          rotation={[0, 0, -poleRotation * Math.PI/180]}
-        >
-          <group position={[0, size.height * 0.6, 0]}> {/* 元の位置に戻す */}
+          <group position={[0, 0, 0]}> {/* 元の位置に戻す */}
             {/* 旗竿 */}
             <mesh 
               ref={poleRef} 
-              position={[-size.width/2, 0, 0]}
+              position={[Math.sin(poleRotation * Math.PI/180)*size.height * 0.6, Math.cos(poleRotation * Math.PI/180)*size.height * 0.6, 0]}
+              rotation={[0, 0, -poleRotation * Math.PI/180]}
             >
-              <cylinderGeometry args={[0.02, 0.02, size.height * 1.2, 16]} />
+              <cylinderGeometry args={[0.02, 0.02, size.height * 2.4, 16]} />
               <meshStandardMaterial color="#888888" metalness={0.8} roughness={0.3} />
             </mesh>
             
             {/* 旗 */}
             <mesh 
               ref={flagRef}
+              position={[0,size.height * 1.2, 0]}
               castShadow 
               receiveShadow
             >
@@ -116,7 +115,6 @@ const FlagSimulation: React.FC<FlagSimulationProps> = ({
               />
             </mesh>
           </group>
-        </group>
       </group>
     </>
   );

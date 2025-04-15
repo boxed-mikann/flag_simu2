@@ -77,7 +77,7 @@ export class ClothSimulation {
     
     // 旗竿の下端を中心とした回転
     const poleHeight = this.height * 1.2; // 旗竿の高さ
-    const poleBottom = -this.height * 0.6; // 旗竿の下端位置
+    const poleBottom = -this.height * 1.2; // 旗竿の下端位置
 
     // 固定点（左端）の位置を更新
     for (let y = 0; y <= this.segments.y; y++) {
@@ -85,9 +85,9 @@ export class ClothSimulation {
       const relativeY = yPos - poleBottom; // 下端からの相対位置
 
       // 点の回転
-      const rotatedX = -this.width / 2 * Math.cos(this.poleRotation);
+      const rotatedX = relativeY * Math.sin(this.poleRotation);//0//-this.width / 2 * Math.cos(this.poleRotation);
       const rotatedY = poleBottom + relativeY * Math.cos(this.poleRotation);
-      const rotatedZ = -this.width / 2 * Math.sin(this.poleRotation);
+      const rotatedZ = 0//-this.width / 2 * Math.sin(this.poleRotation);
       
       const index = this.particleSystem.getIndexAt(0, y);
       this.particleSystem.updatePosition(
@@ -101,7 +101,9 @@ export class ClothSimulation {
     this.particleSystem.resetForces();
 
     // 重力と風の力を適用
-    const time = Date.now() * 0.001;
+    const time = Date.
+    // 重力と風の力を適用
+now() * 0.001;
     
     for (let y = 0; y <= this.segments.y; y++) {
       for (let x = 0; x <= this.segments.x; x++) {
@@ -112,15 +114,15 @@ export class ClothSimulation {
         // 重力は常に下向き（Y軸負方向）
         const gravity = new THREE.Vector3(0, -this.gravity, 0);
         
-        // 風力の計算 - 常に横方向（X軸正方向）
+        // 風力の計算
         const baseWindForce = windForce * 8;
         const xPos = x / this.segments.x;
         
-        // 風は常に横方向で、端に行くほど強く
+        // 風の方向をより自然に
         const wind = new THREE.Vector3(
           baseWindForce * (0.7 + xPos * 0.3),
-          Math.sin(time * 1.5 + xPos * Math.PI * 2) * baseWindForce * 0.25, // わずかな上下の揺れ
-          0
+          Math.sin(time * 1.5 + xPos * Math.PI * 2) * baseWindForce * 0.25, // 上下の揺れ
+          Math.cos(time * 2 + xPos * Math.PI) * baseWindForce * 0.15  // z方向の揺れを追加
         );
 
         this.particleSystem.applyForce(index, gravity);

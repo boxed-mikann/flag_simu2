@@ -9,7 +9,7 @@ function App() {
   const [flagImage, setFlagImage] = useState<string | null>(null);
   const [flagSize, setFlagSize] = useState({ width: 1, height: 0.6 });
   const [flagPosition, setFlagPosition] = useState({ x: 0, y: 0, z: 0 });
-  const [windForce, setWindForce] = useState(1);
+  const [windForce, setWindForce] = useState(0); // デフォルト値を0に変更
   const [formation, setFormation] = useState({ rows: 1, columns: 1, spacing: 1 });
   const [poleRotation, setPoleRotation] = useState(0); // 追加：旗竿の回転角度
   const fileInputRef = useRef<HTMLInputElement>(null);

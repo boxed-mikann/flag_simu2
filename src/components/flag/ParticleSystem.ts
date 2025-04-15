@@ -28,7 +28,8 @@ export class ParticleSystem {
       for (let x = 0; x <= this.segments.x; x++) {
         const px = (x / this.segments.x - 0.5) * this.width;
         const py = (y / this.segments.y - 0.5) * this.height;
-        const pz = 0;
+        // z方向にわずかなランダムな変位を加える
+        const pz = (Math.random() - 0.5) * 0.02; // 微小なランダムな初期z位置
         
         const position = new THREE.Vector3(px, py, pz);
         this.particles.push(position);
