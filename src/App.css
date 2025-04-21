@@ -149,6 +149,66 @@ button {
   border-color: #3a80d2;
 }
 
+/* 画像プレビュー関連のスタイル */
+.image-preview-container {
+  margin-top: 15px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.image-preview {
+  width: 100%;
+  height: 150px;
+  margin: 10px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #eee;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.image-preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.edit-image-btn {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.edit-image-btn:hover {
+  background-color: #45a049;
+}
+
+/* アクセシビリティ用のスタイル */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hidden-input {
+  display: none;
+}
+
 /* レスポンシブデザイン - モバイル向け */
 @media screen and (max-width: 768px) {
   .content {
