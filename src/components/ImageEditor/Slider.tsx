@@ -32,23 +32,25 @@ const Slider: React.FC<SliderProps> = ({
           {label}
         </label>
       )}
-      <input
-        id={sliderId}
-        type="range"
-        className="editor-slider"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        disabled={disabled}
-        title={label || "スライダー"}
-        aria-valuemin={min}
-        aria-valuemax={max}
-        aria-valuenow={value}
-        aria-label={label || "スライダー"}
-      />
-      {valueDisplay && <span className="editor-slider-value">{valueDisplay}</span>}
+      <div className="editor-slider-controls">
+        <input
+          id={sliderId}
+          type="range"
+          className="editor-slider"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(parseFloat(e.target.value))}
+          disabled={disabled}
+          title={label || "スライダー"}
+          aria-valuemin={min}
+          aria-valuemax={max}
+          aria-valuenow={value}
+          aria-label={label || "スライダー"}
+        />
+        {valueDisplay && <span className="editor-slider-value">{valueDisplay}</span>}
+      </div>
     </div>
   );
 };

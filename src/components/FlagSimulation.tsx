@@ -22,7 +22,7 @@ const FlagSimulation: React.FC<FlagSimulationProps> = ({
     const simulation = new ClothSimulation({
       width: size.width,
       height: size.height,
-      segments: { x: 20, y: 15 },
+      segments: { x: 30, y: 30 },
       mass: 0.05,
       damping: 0.03,
       gravity: 5.0,

@@ -122,6 +122,12 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     alert('設定が保存されました');
   };
   
+  // リセット機能を追加
+  const handleReset = () => {
+    setSettings(defaultSettings);
+    addToHistory(defaultSettings);
+  };
+
   // トリミング開始
   const startCropping = () => {
     setIsCropping(true);
@@ -222,6 +228,14 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
       <div className="editor-header">
         <h2>旗デザイン編集</h2>
         <div className="editor-actions">
+          <button 
+            className="editor-button" 
+            onClick={handleReset}
+            disabled={!image || processing}
+            title="編集内容を初期状態に戻します"
+          >
+            リセット
+          </button>
           <button 
             className="editor-button" 
             onClick={handleSaveSettings}
