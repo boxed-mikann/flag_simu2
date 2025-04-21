@@ -8,10 +8,11 @@ import './App.css';
 function App() {
   const [flagImage, setFlagImage] = useState<string | null>(null);
   const [flagSize, setFlagSize] = useState({ width: 1, height: 0.6 });
-  const [flagPosition, setFlagPosition] = useState({ x: 0, y: 0, z: 0 });
+  //const [flagPosition, setFlagPosition] = useState({ x: 0, y: 0, z: 0 });
   const [windForce, setWindForce] = useState(0); // デフォルト値を0に変更
   const [formation, setFormation] = useState({ rows: 1, columns: 1, spacing: 1 });
   const [poleRotation, setPoleRotation] = useState(0); // 追加：旗竿の回転角度
+  const [showControls, setShowControls] = useState(true); // コントロールパネル表示のstate
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,8 +33,8 @@ function App() {
     const flags = [];
     for (let row = 0; row < formation.rows; row++) {
       for (let col = 0; col < formation.columns; col++) {
-        const xOffset = (col - (formation.columns - 1) / 2) * formation.spacing*1.5;
-        const zOffset = (row - (formation.rows - 1) / 2) * formation.spacing*1.5;
+        const xOffset = (col - (formation.columns - 1) / 2) * formation.spacing * 1.5;
+        const zOffset = (row - (formation.rows - 1) / 2) * formation.spacing * 1.5;
 
         flags.push(
           <FlagSimulation
@@ -41,9 +42,9 @@ function App() {
             image={flagImage}
             size={flagSize}
             position={{
-              x: flagPosition.x + xOffset,
-              y: flagPosition.y,
-              z: flagPosition.z + zOffset
+              x: xOffset,
+              y: 0,
+              z: zOffset,
             }}
             windForce={windForce}
             poleRotation={poleRotation} // 追加：回転角度の渡し
@@ -54,40 +55,56 @@ function App() {
     return flags;
   };
 
+  // コントロールパネルの表示/非表示を切り替える関数
+  const toggleControls = () => {
+    setShowControls(!showControls);
+  };
+
   return (
     <div className="app-container">
       <h1>旗デザインシミュレーター</h1>
       
       <div className="content">
-        <div className="controls-panel">
-          <h2>コントロール</h2>
-          <div className="upload-section">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              ref={fileInputRef}
-              style={{ display: 'none' }}
-            />
-            <button onClick={() => fileInputRef.current?.click()}>
-              旗の画像をアップロード
-            </button>
-            {flagImage && <p>画像がアップロードされました</p>}
-          </div>
+        {/* コントロールパネル表示切替ボタン */}
+        <button 
+          onClick={toggleControls} 
+          className="toggle-controls-btn"
+        >
+          {showControls ? 'コントロールを隠す' : 'コントロールを表示'}
+        </button>
 
-          <Controls
-            flagSize={flagSize}
-            setFlagSize={setFlagSize}
-            flagPosition={flagPosition}
-            setFlagPosition={setFlagPosition}
-            windForce={windForce}
-            setWindForce={setWindForce}
-            formation={formation}
-            setFormation={setFormation}
-            poleRotation={poleRotation} // 追加：回転角度の渡し
-            setPoleRotation={setPoleRotation} // 追加：回転角度の設定関数
-          />
-        </div>
+        {/* showControlsの値に応じてコントロールパネルを表示/非表示 */}
+        {showControls && (
+          <div className="controls-panel">
+            <h2>コントロール</h2>
+            <div className="upload-section">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+              />
+              <button onClick={() => fileInputRef.current?.click()}>
+                旗の画像をアップロード
+              </button>
+              {flagImage && <p>画像がアップロードされました</p>}
+            </div>
+
+            <Controls
+              flagSize={flagSize}
+              setFlagSize={setFlagSize}
+              //flagPosition={flagPosition}
+              //setFlagPosition={setFlagPosition}
+              windForce={windForce}
+              setWindForce={setWindForce}
+              formation={formation}
+              setFormation={setFormation}
+              poleRotation={poleRotation} // 追加：回転角度の渡し
+              setPoleRotation={setPoleRotation} // 追加：回転角度の設定関数
+            />
+          </div>
+        )}
 
         <div className="simulation-panel">
           <Canvas 

@@ -5,11 +5,13 @@ interface Size {
   height: number;
 }
 
+/*
 interface Position {
   x: number;
   y: number;
   z: number;
 }
+*/
 
 interface Formation {
   rows: number;
@@ -20,8 +22,8 @@ interface Formation {
 interface ControlsProps {
   flagSize: Size;
   setFlagSize: React.Dispatch<React.SetStateAction<Size>>;
-  flagPosition: Position;
-  setFlagPosition: React.Dispatch<React.SetStateAction<Position>>;
+  //flagPosition: Position;
+  //setFlagPosition: React.Dispatch<React.SetStateAction<Position>>;
   windForce: number;
   setWindForce: React.Dispatch<React.SetStateAction<number>>;
   formation: Formation;
@@ -33,8 +35,8 @@ interface ControlsProps {
 const Controls: React.FC<ControlsProps> = ({
   flagSize,
   setFlagSize,
-  flagPosition,
-  setFlagPosition,
+  //flagPosition,
+  //setFlagPosition,
   windForce,
   setWindForce,
   formation,
@@ -89,6 +91,7 @@ const Controls: React.FC<ControlsProps> = ({
         </div>
       </div>
 
+      {/*
       <div className="control-group">
         <h3>位置調整</h3>
         <div className="slider-container">
@@ -146,7 +149,7 @@ const Controls: React.FC<ControlsProps> = ({
           <div className="value-display">{flagPosition.z.toFixed(1)}</div>
         </div>
       </div>
-
+      */}
       <div className="control-group">
         <h3>風の強さ</h3>
         <div className="slider-container">

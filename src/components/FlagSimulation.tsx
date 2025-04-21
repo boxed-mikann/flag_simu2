@@ -8,7 +8,7 @@ import { Grid } from '@react-three/drei';
 const FlagSimulation: React.FC<FlagSimulationProps> = ({
   image,
   size,
-  position,
+  position = { x: 0, y: 0, z: 0 }, // デフォルト値を設定
   windForce,
   poleRotation,
 }) => {

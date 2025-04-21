@@ -10,15 +10,72 @@
   flex-direction: row;
   width: 100%;
   height: calc(100vh - 150px);
+  position: relative;
 }
 
 .controls-panel {
   width: 300px;
   padding: 20px;
-  background-color: #f0f0f0;
+  background-color: rgba(240, 240, 240, 0.9);
   border-right: 1px solid #ccc;
   color: #333;
   overflow-y: auto;
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  z-index: 10;
+}
+
+.controls-panel.collapsed {
+  transform: translateX(-100%);
+}
+
+.controls-panel.semi-transparent {
+  background-color: rgba(240, 240, 240, 0.7);
+}
+
+.toggle-controls {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  z-index: 15;
+  padding: 8px 15px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.toggle-controls:hover {
+  background-color: rgba(255, 255, 255, 1);
+}
+
+.transparency-toggle {
+  position: absolute;
+  left: 10px;
+  top: 50px;
+  z-index: 15;
+  padding: 8px 15px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.toggle-controls-btn {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 100;
+  padding: 8px 12px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.toggle-controls-btn:hover {
+  background-color: #357ae8;
 }
 
 .simulation-panel {
@@ -92,15 +149,38 @@ button {
   border-color: #3a80d2;
 }
 
-@media (max-width: 768px) {
+/* レスポンシブデザイン - モバイル向け */
+@media screen and (max-width: 768px) {
   .content {
     flex-direction: column;
+    height: calc(100vh - 100px);
   }
   
   .controls-panel {
     width: 100%;
+    height: 40%; /* モバイルでは高さの40%を使用 */
     border-right: none;
-    border-bottom: 1px solid #ccc;
-    max-height: 300px;
+    border-top: 1px solid #ccc;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    transform: translateY(0);
+  }
+  
+  .controls-panel.collapsed {
+    transform: translateY(100%);
+  }
+  
+  .toggle-controls, .transparency-toggle {
+    top: auto;
+    bottom: 10px;
+  }
+  
+  .transparency-toggle {
+    left: 80px;
+  }
+  
+  .simulation-panel {
+    height: 100%;
   }
 }
