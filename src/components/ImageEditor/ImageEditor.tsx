@@ -218,7 +218,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
       // 背景削除の適用
       if (settings.removeBackground) {
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const processedData = removeBackground(ctx, imageData);
+        const processedData = removeBackground(imageData);
         ctx.putImageData(processedData, 0, 0);
       }
       

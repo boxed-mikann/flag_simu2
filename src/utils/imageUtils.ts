@@ -34,12 +34,10 @@ export const getImageDataFromCanvas = (
 /**
  * 背景色を透明にします（簡易的なクロマキー処理）
  * @param imageData 画像データ
- * @param threshold 閾値（0-255）
- * @param tolerance 許容度
+ * @param options クロマキーの設定オプション
  * @returns 処理後の画像データ
  */
 export const removeBackground = (
-  ctx: CanvasRenderingContext2D,
   imageData: ImageData,
   options: {
     redThreshold?: number; 
