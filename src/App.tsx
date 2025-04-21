@@ -144,13 +144,24 @@ function App() {
               camera={{ position: [2, 2, 4], fov: 50 }}
               shadows
             >
-              <color attach="background" args={["#f0f0f0"]} />
-              <ambientLight intensity={0.8} />
+              <color attach="background" args={["#e8e8e8"]} /> {/* より明るい背景色 */}
+              {/* 自然な環境光 */}
+              <ambientLight intensity={0.5} color="#ffffff" />
+              
+              {/* メインの太陽光 */}
               <directionalLight 
                 position={[5, 5, 5]} 
-                intensity={1}
+                intensity={10}
+                color="#fffaf0"
                 castShadow
                 shadow-mapSize={[2048, 2048]}
+              />
+              
+              {/* 補助光（影を柔らかくする） */}
+              <directionalLight
+                position={[-5, 3, -5]}
+                intensity={0.3}
+                color="#b0c4de"
               />
               <Suspense fallback={null}>
                 {renderFlags()}

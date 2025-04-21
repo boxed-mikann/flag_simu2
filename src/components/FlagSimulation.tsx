@@ -103,9 +103,16 @@ const FlagSimulation: React.FC<FlagSimulationProps> = ({
               ref={poleRef} 
               position={[Math.sin(poleRotation * Math.PI/180)*flagSize.height * 0.6, Math.cos(poleRotation * Math.PI/180)*flagSize.height * 0.6, 0]}
               rotation={[0, 0, -poleRotation * Math.PI/180]}
+              castShadow
+              receiveShadow
             >
               <cylinderGeometry args={[0.02, 0.02, flagSize.height * 2.4, 16]} />
-              <meshStandardMaterial color="#888888" metalness={0.8} roughness={0.3} />
+              <meshStandardMaterial 
+                color="#555555" 
+                metalness={0.9} 
+                roughness={0.2}
+                envMapIntensity={1.0} 
+              />
             </mesh>
             
             {/* 旗 */}
@@ -119,8 +126,11 @@ const FlagSimulation: React.FC<FlagSimulationProps> = ({
                 map={texture}
                 side={THREE.DoubleSide}
                 transparent={true}
-                roughness={0.8}
-                metalness={0.2}
+                roughness={0.6}  // より布らしい質感
+                metalness={0.1}  // 金属感を抑える
+                envMapIntensity={0.5}  // 環境マッピングの強度
+                aoMapIntensity={0.5}   // アンビエントオクルージョンの強度
+                normalScale={new THREE.Vector2(0.1, 0.1)} // 法線マッピングの強度
               />
             </mesh>
           </group>
