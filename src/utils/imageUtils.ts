@@ -40,37 +40,77 @@ export const getImageDataFromCanvas = (
 export const removeBackground = (
   imageData: ImageData,
   options: {
-    redThreshold?: number; 
-    greenThreshold?: number; 
-    blueThreshold?: number;
+    backgroundColors?: Array<[number, number, number]>;
     tolerance?: number;
+    edgeThreshold?: number;
   } = {}
 ): ImageData => {
-  const { 
-    redThreshold = 100, 
-    greenThreshold = 100, 
-    blueThreshold = 100,
-    tolerance = 50 
+  const {
+    backgroundColors = [],
+    tolerance = 30,
+    edgeThreshold = 30
   } = options;
-  
+
+  const width = imageData.width;
+  const height = imageData.height;
   const data = imageData.data;
-  
+
+  // エッジ検出用の配列
+  const edges = new Uint8Array(width * height);
+
+  // 簡易的なSobelフィルタでエッジを検出
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const idx = (y * width + x) * 4;
+      
+      // 周辺ピクセルの輝度を計算
+      const gx = (
+        data[idx + 4] - data[idx - 4] +
+        2 * (data[idx + 4 + width * 4] - data[idx - 4 + width * 4]) +
+        data[idx + 4 + width * 8] - data[idx - 4 + width * 8]
+      ) / 4;
+      
+      const gy = (
+        data[idx + width * 8] - data[idx] +
+        2 * (data[idx + 4 + width * 8] - data[idx + 4]) +
+        data[idx + 8 + width * 8] - data[idx + 8]
+      ) / 4;
+      
+      edges[y * width + x] = Math.sqrt(gx * gx + gy * gy) > edgeThreshold ? 255 : 0;
+    }
+  }
+
+  // 背景削除処理
   for (let i = 0; i < data.length; i += 4) {
     const r = data[i];
     const g = data[i + 1];
     const b = data[i + 2];
+    const pixelIndex = Math.floor(i / 4);
+
+    // 選択された背景色との差異を計算
+    let minColorDiff = Infinity;
+    for (const bgColor of backgroundColors) {
+      const colorDiff = Math.sqrt(
+        Math.pow(r - bgColor[0], 2) +
+        Math.pow(g - bgColor[1], 2) +
+        Math.pow(b - bgColor[2], 2)
+      );
+      minColorDiff = Math.min(minColorDiff, colorDiff);
+    }
     
-    // 緑色の背景を検出（クロマキー）
-    if (
-      g > Math.max(r, b) + tolerance ||
-      (r > redThreshold && g > greenThreshold && b > blueThreshold)
-    ) {
-      data[i + 3] = 0; // アルファチャンネルを0に設定（透明）
+    // エッジ付近かどうかを確認
+    const isNearEdge = edges[pixelIndex] > 0;
+    
+    // 背景判定（いずれかの背景色に近い場合）
+    if ((minColorDiff < tolerance * 3 || backgroundColors.length === 0) && !isNearEdge) {
+      // アルファ値を徐々に変化させる
+      const alpha = Math.min(255, minColorDiff * (255 / (tolerance * 3)));
+      data[i + 3] = alpha;
     }
   }
-  
+
   return imageData;
-};
+}
 
 /**
  * 画像の明るさとコントラストを調整します

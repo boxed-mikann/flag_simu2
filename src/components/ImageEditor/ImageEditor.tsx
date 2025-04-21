@@ -23,6 +23,9 @@ interface ImageSettings {
     width: number;
     height: number;
   } | null;
+  backgroundColors: Array<[number, number, number]>;
+  backgroundTolerance: number;
+  backgroundEdgeThreshold: number;
 }
 
 const defaultSettings: ImageSettings = {
@@ -31,7 +34,10 @@ const defaultSettings: ImageSettings = {
   rotation: 0,
   flipHorizontal: false,  // デフォルトは反転なし
   removeBackground: false,
-  cropData: null
+  cropData: null,
+  backgroundColors: [],
+  backgroundTolerance: 30,
+  backgroundEdgeThreshold: 30
 };
 
 const ImageEditor: React.FC<ImageEditorProps> = ({
@@ -46,6 +52,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
   const [isCropping, setIsCropping] = useState(false);
   const [history, setHistory] = useState<ImageSettings[]>([defaultSettings]);
   const [historyIndex, setHistoryIndex] = useState(0);
+  const [isPickingBackground, setIsPickingBackground] = useState(false);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -145,6 +152,40 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
   const cancelCrop = () => {
     setIsCropping(false);
   };
+
+  // 背景色ピッカーの処理
+  const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isPickingBackground || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((event.clientX - rect.left) * (canvas.width / rect.width));
+    const y = Math.floor((event.clientY - rect.top) * (canvas.height / rect.height));
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const pixel = ctx.getImageData(x, y, 1, 1).data;
+    const newColor: [number, number, number] = [pixel[0], pixel[1], pixel[2]];
+    
+    // 背景色リストに追加
+    const newSettings = {
+      ...settings,
+      backgroundColors: [...settings.backgroundColors, newColor]
+    };
+    setSettings(newSettings);
+    addToHistory(newSettings);
+  };
+
+  // 背景削除設定のリセット
+  const resetBackgroundSettings = () => {
+    const newSettings = {
+      ...settings,
+      backgroundColors: []
+    };
+    setSettings(newSettings);
+    addToHistory(newSettings);
+  };
   
   // 画像処理の適用
   const applyImageProcessing = async () => {
@@ -218,7 +259,11 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
       // 背景削除の適用
       if (settings.removeBackground) {
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const processedData = removeBackground(imageData);
+        const processedData = removeBackground(imageData, {
+          backgroundColors: settings.backgroundColors,
+          tolerance: settings.backgroundTolerance,
+          edgeThreshold: settings.backgroundEdgeThreshold
+        });
         ctx.putImageData(processedData, 0, 0);
       }
       
@@ -315,19 +360,44 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
           トリミング
         </button>
         
-        <button 
-          className={`editor-button ${settings.removeBackground ? 'active' : ''}`}
-          onClick={() => handleSettingChange('removeBackground', !settings.removeBackground)}
-          disabled={!image || processing}
-        >
-          背景削除
-        </button>
+        <div className="background-removal-controls">
+          <button 
+            className={`editor-button ${isPickingBackground ? 'active' : ''}`}
+            onClick={() => setIsPickingBackground(!isPickingBackground)}
+            disabled={!image || processing}
+            title="クリックして背景色を選択"
+          >
+            背景色を選択
+          </button>
+          {settings.backgroundColors.length > 0 && (
+            <button
+              className="editor-button"
+              onClick={resetBackgroundSettings}
+              disabled={processing}
+            >
+              背景色をリセット
+            </button>
+          )}
+          <button 
+            className={`editor-button ${settings.removeBackground ? 'active' : ''}`}
+            onClick={() => handleSettingChange('removeBackground', !settings.removeBackground)}
+            disabled={!image || processing || settings.backgroundColors.length === 0}
+          >
+            背景を削除
+          </button>
+        </div>
       </div>
       
       <div className="editor-content">
-        <div className="editor-canvas-container">
+        <div className="editor-canvas-container"
+          style={{ cursor: isPickingBackground ? 'crosshair' : 'default' }}
+        >
           {processing && <div className="processing-overlay">処理中...</div>}
-          <canvas ref={canvasRef} className="editor-canvas" />
+          <canvas 
+            ref={canvasRef} 
+            className="editor-canvas"
+            onClick={handleCanvasClick}
+          />
           
           {isCropping && image && (
             <CropTool
@@ -426,6 +496,56 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
               180°
             </button>
           </div>
+
+          {settings.removeBackground && (
+            <div className="control-group">
+              <h3>背景削除設定</h3>
+              <Slider
+                label="許容値"
+                min={0}
+                max={100}
+                step={1}
+                value={settings.backgroundTolerance}
+                onChange={(value) => handleSettingChange('backgroundTolerance', value)}
+                disabled={!image || processing}
+                valueDisplay={`${settings.backgroundTolerance}`}
+              />
+              <Slider
+                label="エッジ検出感度"
+                min={0}
+                max={100}
+                step={1}
+                value={settings.backgroundEdgeThreshold}
+                onChange={(value) => handleSettingChange('backgroundEdgeThreshold', value)}
+                disabled={!image || processing}
+                valueDisplay={`${settings.backgroundEdgeThreshold}`}
+              />
+              <div className="selected-colors">
+                <p>選択された背景色:</p>
+                <div className="color-samples">
+                  {settings.backgroundColors.map((color, index) => (
+                    <div
+                      key={index}
+                      className="color-sample"
+                      style={{
+                        backgroundColor: `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
+                        width: '20px',
+                        height: '20px',
+                        display: 'inline-block',
+                        margin: '2px',
+                        border: '1px solid #ccc'
+                      }}
+                      onClick={() => {
+                        const newColors = settings.backgroundColors.filter((_, i) => i !== index);
+                        handleSettingChange('backgroundColors', newColors);
+                      }}
+                      title="クリックで削除"
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

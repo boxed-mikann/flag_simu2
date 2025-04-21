@@ -208,6 +208,43 @@
   width: 100%;
 }
 
+.background-removal-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.color-samples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.color-sample {
+  cursor: pointer;
+  border-radius: 4px;
+  transition: transform 0.2s;
+}
+
+.color-sample:hover {
+  transform: scale(1.1);
+}
+
+.selected-colors p {
+  margin: 0;
+  font-size: 0.9em;
+  color: #666;
+}
+
+/* アクティブな背景色選択モード時のカーソルスタイル */
+.editor-canvas-container.picking-background {
+  cursor: crosshair;
+}
+
 @media (min-width: 768px) {
   .editor-content {
     flex-direction: row;
