@@ -50,7 +50,7 @@ export class ClothSimulation {
         positions[i * 3 + 2] = particle.z;
 
         uvs[i * 2] = x / this.segments.x;
-        uvs[i * 2 + 1] = 1 - (y / this.segments.y);
+        uvs[i * 2 + 1] = y / this.segments.y; // 上下反転を修正
       }
     }
 

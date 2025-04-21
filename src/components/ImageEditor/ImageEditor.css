@@ -203,6 +203,11 @@
   display: none;
 }
 
+.editor-flip-button {
+  margin-top: 10px;
+  width: 100%;
+}
+
 @media (min-width: 768px) {
   .editor-content {
     flex-direction: row;

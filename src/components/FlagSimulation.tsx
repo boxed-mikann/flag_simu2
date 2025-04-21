@@ -6,7 +6,7 @@ import { ClothSimulation } from './flag/ClothSimulation';
 import { Grid } from '@react-three/drei';
 
 const BASE_WIDTH = 1.0; // 基準となる幅
-const SEGMENTS_Y = 20; // Y方向（高さ方向）のセグメント数を固定
+const SEGMENTS_Y = 15; // Y方向（高さ方向）のセグメント数を固定
 
 const FlagSimulation: React.FC<FlagSimulationProps> = ({
   image,

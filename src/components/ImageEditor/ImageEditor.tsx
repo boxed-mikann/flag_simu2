@@ -15,6 +15,7 @@ interface ImageSettings {
   brightness: number;
   contrast: number;
   rotation: number;
+  flipHorizontal: boolean;  // 左右反転の状態を追加
   removeBackground: boolean;
   cropData: {
     x: number;
@@ -28,6 +29,7 @@ const defaultSettings: ImageSettings = {
   brightness: 0,
   contrast: 0,
   rotation: 0,
+  flipHorizontal: false,  // デフォルトは反転なし
   removeBackground: false,
   cropData: null
 };
@@ -168,17 +170,29 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
       // 画像を描画
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
+      // 変換行列を初期化
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+      // キャンバスの中心に移動
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+
+      // 左右反転の適用
+      if (settings.flipHorizontal) {
+        ctx.scale(-1, 1);
+      }
+
       // 回転の適用
       if (settings.rotation !== 0) {
         const radians = (settings.rotation * Math.PI) / 180;
-        ctx.save();
-        ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.rotate(radians);
-        ctx.drawImage(img, -img.width / 2, -img.height / 2);
-        ctx.restore();
-      } else {
-        ctx.drawImage(img, 0, 0);
       }
+
+      // 画像を描画（中心を基準に）
+      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+      
+      // 変換をリセット
+      ctx.restore();
       
       // クロップの適用
       if (settings.cropData) {
@@ -370,6 +384,15 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
               disabled={!image || processing}
               valueDisplay={`${settings.rotation}°`}
             />
+
+            {/* 左右反転のボタンを追加 */}
+            <button
+              className={`editor-button editor-flip-button ${settings.flipHorizontal ? 'active' : ''}`}
+              onClick={() => handleSettingChange('flipHorizontal', !settings.flipHorizontal)}
+              disabled={!image || processing}
+            >
+              左右反転 {settings.flipHorizontal ? '(オン)' : '(オフ)'}
+            </button>
           </div>
           
           {/* 角度ボタン */}
