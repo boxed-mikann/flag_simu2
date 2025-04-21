@@ -8,12 +8,11 @@ import './App.css';
 
 function App() {
   const [flagImage, setFlagImage] = useState<string | null>(null);
-  const [flagSize, setFlagSize] = useState({ width: 1, height: 0.6 });
-  const [windForce, setWindForce] = useState(0); // デフォルト値を0に変更
+  const [windForce, setWindForce] = useState(0);
   const [formation, setFormation] = useState({ rows: 1, columns: 1, spacing: 1 });
-  const [poleRotation, setPoleRotation] = useState(0); // 追加：旗竿の回転角度
-  const [showControls, setShowControls] = useState(true); // コントロールパネル表示のstate
-  const [showEditor, setShowEditor] = useState(false); // 画像エディタ表示のstate
+  const [poleRotation, setPoleRotation] = useState(0);
+  const [showControls, setShowControls] = useState(true);
+  const [showEditor, setShowEditor] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,7 +22,6 @@ function App() {
       reader.onload = (e) => {
         const result = e.target?.result as string;
         setFlagImage(result);
-        // アップロード直後に編集モードを表示
         setShowEditor(true);
       };
       reader.readAsDataURL(file);
@@ -41,6 +39,11 @@ function App() {
     setShowEditor(false);
   };
 
+  // 画像編集モードを開始
+  const startImageEdit = () => {
+    setShowEditor(true);
+  };
+
   // 隊列の旗を生成する関数
   const renderFlags = () => {
     if (!flagImage) return null;
@@ -55,7 +58,6 @@ function App() {
           <FlagSimulation
             key={`flag-${row}-${col}`}
             image={flagImage}
-            size={flagSize}
             position={{
               x: xOffset,
               y: 0,
@@ -75,11 +77,6 @@ function App() {
     setShowControls(!showControls);
   };
 
-  // 画像編集モードを開始
-  const startImageEdit = () => {
-    setShowEditor(true);
-  };
-
   return (
     <div className="app-container">
       <h1>旗デザインシミュレーター</h1>
@@ -93,7 +90,6 @@ function App() {
         />
       ) : (
         <div className="content">
-          {/* コントロールパネル表示切替ボタン */}
           <button 
             onClick={toggleControls} 
             className="toggle-controls-btn"
@@ -101,7 +97,6 @@ function App() {
             {showControls ? 'コントロールを隠す' : 'コントロールを表示'}
           </button>
 
-          {/* showControlsの値に応じてコントロールパネルを表示/非表示 */}
           {showControls && (
             <div className="controls-panel">
               <h2>コントロール</h2>
@@ -134,8 +129,6 @@ function App() {
               </div>
 
               <Controls
-                flagSize={flagSize}
-                setFlagSize={setFlagSize}
                 windForce={windForce}
                 setWindForce={setWindForce}
                 formation={formation}

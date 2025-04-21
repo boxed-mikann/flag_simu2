@@ -1,14 +1,16 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useTexture } from '@react-three/drei';
 import { FlagSimulationProps } from './flag/types';
 import { ClothSimulation } from './flag/ClothSimulation';
 import { Grid } from '@react-three/drei';
 
+const BASE_WIDTH = 1.0; // 基準となる幅
+const SEGMENTS_Y = 20; // Y方向（高さ方向）のセグメント数を固定
+
 const FlagSimulation: React.FC<FlagSimulationProps> = ({
   image,
-  size,
-  position = { x: 0, y: 0, z: 0 }, // デフォルト値を設定
+  position = { x: 0, y: 0, z: 0 },
   windForce,
   poleRotation,
 }) => {
@@ -16,31 +18,38 @@ const FlagSimulation: React.FC<FlagSimulationProps> = ({
   const poleRef = useRef<THREE.Mesh>(null);
   const texture = useTexture(image);
   const simulationRef = useRef<ClothSimulation | null>(null);
+  const [flagSize, setFlagSize] = useState({ width: BASE_WIDTH, height: BASE_WIDTH });
 
-  // シミュレーションの初期化
+  // テクスチャが読み込まれた時に画像のアスペクト比に基づいてサイズを設定
   useEffect(() => {
-    const simulation = new ClothSimulation({
-      width: size.width,
-      height: size.height,
-      segments: { x: 30, y: 30 },
-      mass: 0.05,
-      damping: 0.03,
-      gravity: 5.0,
-      poleRadius: 0.02
-    });
-    simulationRef.current = simulation;
+    if (texture && texture.image) {
+      const aspectRatio = texture.image.width / texture.image.height;
+      const height = BASE_WIDTH / aspectRatio;
+      setFlagSize({ width: BASE_WIDTH, height });
 
-    if (flagRef.current) {
-      flagRef.current.geometry = simulation.getGeometry();
+      // アスペクト比に基づいてX方向のセグメント数を計算
+      // Y方向は固定で30、X方向はアスペクト比に合わせて調整
+      const segmentsX = Math.round(SEGMENTS_Y * aspectRatio);
+
+      // シミュレーションの再初期化
+      const simulation = new ClothSimulation({
+        width: BASE_WIDTH,
+        height,
+        segments: { x: segmentsX, y: SEGMENTS_Y },
+        mass: 0.05,
+        damping: 0.03,
+        gravity: 5.0,
+        poleRadius: 0.02
+      });
+      simulationRef.current = simulation;
+
+      if (flagRef.current) {
+        flagRef.current.geometry = simulation.getGeometry();
+      }
     }
-
-    return () => {
-      simulationRef.current = null;
-    };
-  }, [size]);
+  }, [texture]);
 
   // 回転角度の更新
-  
   useEffect(() => {
     if (simulationRef.current) {
       simulationRef.current.setPoleRotation(poleRotation);
@@ -69,7 +78,7 @@ const FlagSimulation: React.FC<FlagSimulationProps> = ({
         cancelAnimationFrame(frameId);
       }
     };
-  }, [windForce, size, position, poleRotation]);
+  }, [windForce, position, poleRotation]);
 
   return (
     <>
@@ -88,21 +97,21 @@ const FlagSimulation: React.FC<FlagSimulationProps> = ({
       {/* 旗と旗竿のグループ */}
       <group position={[position.x, position.y, position.z]}>
         {/* 下端を中心とした回転グループ */}
-          <group position={[0, 0, 0]}> {/* 元の位置に戻す */}
+          <group position={[0, 0, 0]}>
             {/* 旗竿 */}
             <mesh 
               ref={poleRef} 
-              position={[Math.sin(poleRotation * Math.PI/180)*size.height * 0.6, Math.cos(poleRotation * Math.PI/180)*size.height * 0.6, 0]}
+              position={[Math.sin(poleRotation * Math.PI/180)*flagSize.height * 0.6, Math.cos(poleRotation * Math.PI/180)*flagSize.height * 0.6, 0]}
               rotation={[0, 0, -poleRotation * Math.PI/180]}
             >
-              <cylinderGeometry args={[0.02, 0.02, size.height * 2.4, 16]} />
+              <cylinderGeometry args={[0.02, 0.02, flagSize.height * 2.4, 16]} />
               <meshStandardMaterial color="#888888" metalness={0.8} roughness={0.3} />
             </mesh>
             
             {/* 旗 */}
             <mesh 
               ref={flagRef}
-              position={[0,size.height * 1.2, 0]}
+              position={[0, flagSize.height * 1.2, 0]}
               castShadow 
               receiveShadow
             >
