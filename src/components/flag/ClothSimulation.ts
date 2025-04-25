@@ -115,7 +115,12 @@ now() * 0.001;
         const gravity = new THREE.Vector3(0, -this.gravity, 0);
         
         // 風力の計算
-        const baseWindForce = windForce * 8;
+        const maxWindForce = windForce * 8;
+        // 周期的な変動とランダム性を組み合わせる
+        const periodicVariation = 0.5 + Math.sin(time * 0.7) * 0.3 + Math.cos(time * 1.3) * 0.2;
+        const randomVariation = Math.random() * 0.2; // 小さなランダム変動
+        const windVariation = Math.max(0, Math.min(1, periodicVariation + randomVariation)); // 0～1に制限
+        const baseWindForce = maxWindForce * windVariation;
         const xPos = x / this.segments.x;
         
         // 風の方向をより自然に
